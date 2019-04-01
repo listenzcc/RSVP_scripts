@@ -5,6 +5,7 @@ import mne
 import numpy as np
 import os
 from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import ShuffleSplit
 from sklearn.pipeline import make_pipeline
@@ -13,7 +14,8 @@ from sklearn.svm import SVC
 
 
 file_dir = os.path.join('D:\\', 'RSVP_MEG_experiment', 'rawdata',
-                        '20190326', '20190326', 'S%02d_lixiangTHU_20190326_%02d.ds')
+                        '20190326', '20190326',
+                        'S%02d_lixiangTHU_20190326_%02d.ds')
 
 event_id = dict(MI1=1, MI2=2)
 tmin, t0, tmax = -1, 0, 4
@@ -29,7 +31,7 @@ raw_files = [mne.io.read_raw_ctf(
     file_dir % (2, j), preload=True) for j in [1, 2]]
 raw = mne.concatenate_raws(raw_files)
 raw.filter(freq_l, freq_h, fir_design='firwin')
-picks = mne.pick_types(raw.info, meg=True, exclude='bads')
+picks = mne.pick_types(raw.info, meg=True, ref_meg=False, exclude='bads')
 
 # Get events
 events = mne.find_events(raw, stim_channel='UPPT001')
@@ -39,7 +41,6 @@ epochs = mne.Epochs(raw, event_id=event_id, events=events,
                     decim=decim, tmin=tmin, tmax=tmax,
                     picks=picks, baseline=baseline,
                     reject=reject, preload=True)
-epochs.pick_types(meg=True, ref_meg=False)
 epochs.resample(120, npad="auto")
 
 # Get evoked
@@ -63,11 +64,12 @@ epochs_data_train = epochs_train.get_data()
 # CSP LR demo
 csp = mne.decoding.CSP(n_components=6, reg=None,
                        log=True, norm_trace=False)
-csp.fit_transform(epochs_data_train, labels)
-csp.plot_patterns(epochs.info, show=False)
+# csp.fit_transform(epochs_data_train, labels)
+# csp.plot_patterns(epochs.info, show=False)
 cv = ShuffleSplit(10, test_size=0.2)
 lr = LogisticRegression(solver='lbfgs')
 svm = SVC(gamma='auto')
+lda = LinearDiscriminantAnalysis()
 clf = make_pipeline(mne.decoding.Scaler(epochs_train.info),
                     csp,
                     mne.decoding.Vectorizer(),
