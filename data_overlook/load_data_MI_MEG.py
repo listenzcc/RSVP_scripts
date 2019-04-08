@@ -23,8 +23,6 @@ file_dir = os.path.join('D:\\', 'RSVP_MEG_experiment', 'rawdata',
                         'S%02d_lixiangTHU_20190326_%02d.ds')
 subject_name = 'maxuelin'
 subject_idx = 2
-subject_name = 'zhangchuncheng'
-subject_idx = 1
 run_idx = [1, 2]
 
 # Parameter for preprocess raw
