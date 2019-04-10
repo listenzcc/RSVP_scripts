@@ -23,7 +23,7 @@ npz_path = os.path.join(result_dir, 'npz_%s.npz')
 
 figures = []
 
-for freq in [180, 240]:
+for freq in [30, 60, 90, 120]:
     # load variables from npz file
     data = np.load(npz_path % str(freq))
     scores = data['scores'].tolist()
