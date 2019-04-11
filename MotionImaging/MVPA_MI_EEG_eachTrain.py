@@ -14,7 +14,7 @@ import time
 ##############
 # Parameters #
 ##############
-time_stamp = time.strftime('MI_MEG_eachTrain_%Y-%m-%d-%H-%M-%S')
+time_stamp = time.strftime('MI_EEG_eachTrain_%Y-%m-%d-%H-%M-%S')
 print('Initing parameters.')
 # Results pdf path
 result_dir = os.path.join('D:\\', 'RSVP_MEG_experiment', 'scripts',
@@ -26,17 +26,16 @@ npz_path = os.path.join(result_dir, 'npz_%s.npz')
 
 # Parameter for read raw
 file_dir = os.path.join('D:\\', 'RSVP_MEG_experiment', 'rawdata',
-                        '20190326_MI_MEG_%s',
-                        'S%02d_lixiangTHU_20190326_%02d.ds')
-subject_name = 'maxuelin'
-subject_idx = 2
-run_idx = [1, 2]
+                        '%s', '%s')
+subject_name = '20190402_MI_EEG_maxuelin'
+cnt_files = ['mxl_MI_1.cnt', 'mxl_MI_2.cnt']
 
 # Parameter for preprocess raw
-freq_l, freq_h = 1, 360
+freq_l, freq_h = 1, 120
 fir_design = 'firwin'
-meg = True
+meg = False
 ref_meg = False
+eeg = True
 exclude = 'bads'
 
 # Parameter for epochs
@@ -44,8 +43,8 @@ event_id = dict(MI1=1, MI2=2)
 tmin, t0, tmax = -1, 0, 4
 for freq in np.arange(freq_h, freq_l, -freq_h/4):
     decim = 1
-    reject = dict(mag=5e-12)
-    stim_channel = 'UPPT001'
+    reject = dict()
+    stim_channel = 'STI 014'
 
     # frequency
     n_cycles = 2
@@ -61,13 +60,13 @@ for freq in np.arange(freq_h, freq_l, -freq_h/4):
     n_jobs = 12
 
     # prepare rawobject
-    raw_files = [mne.io.read_raw_ctf(
-        file_dir % (subject_name, subject_idx, j), preload=True)
-        for j in run_idx]
+    motage = mne.channels.read_montage('standard_1020')
+    raw_files = [mne.io.read_raw_cnt(
+        file_dir % (subject_name, j), motage, preload=True) for j in cnt_files]
     raw = mne.concatenate_raws(raw_files)
     raw.filter(freq_l, freq_h, fir_design=fir_design)
     # choose channel type
-    picks = mne.pick_types(raw.info, meg=meg, ref_meg=ref_meg, exclude=exclude)
+    picks = mne.pick_types(raw.info, eeg=eeg, exclude=exclude)
 
     #############
     # Let it go #

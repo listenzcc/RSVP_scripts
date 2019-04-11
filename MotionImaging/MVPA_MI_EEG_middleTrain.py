@@ -9,14 +9,16 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import ShuffleSplit
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
+import time
 
 ##############
 # Parameters #
 ##############
+time_stamp = time.strftime('MI_EEG_middleTrain_%Y-%m-%d-%H-%M-%S')
 print('Initing parameters.')
 # Results pdf path
 result_dir = os.path.join('D:\\', 'RSVP_MEG_experiment', 'scripts',
-                          'MotionImaging', 'results')
+                          'MotionImaging', 'results', time_stamp)
 if not os.path.exists(result_dir):
     os.mkdir(result_dir)
 
@@ -39,7 +41,7 @@ exclude = 'bads'
 # Parameter for epochs
 event_id = dict(MI1=1, MI2=2)
 tmin, t0, tmax = -1, 0, 4
-for freq in [30, 60, 90, 120]:
+for freq in np.arange(freq_h, freq_l, -freq_h/4):
     decim = 1
     reject = dict()
     stim_channel = 'STI 014'

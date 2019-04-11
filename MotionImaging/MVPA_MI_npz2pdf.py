@@ -16,38 +16,53 @@ result_dir = os.path.join('D:\\', 'RSVP_MEG_experiment', 'scripts',
 if not os.path.exists(result_dir):
     os.mkdir(result_dir)
 
-pdf_path = os.path.join(result_dir, 'foo_%s.pdf' %
-                        time.strftime('%Y-%m-%d-%H-%M-%S'))
+def listdir(dirpath, pre=''):
+    subdirs = [e for e in os.listdir(dirpath) if os.path.isdir(os.path.join(dirpath, e)) and e.startswith(pre)]
+    return subdirs
+
 npz_path = os.path.join(result_dir, 'npz_%s.npz')
 
+for pre_ in ['MI_EEG_middleTrain', 'MI_EEG_eachTrain', 'MI_MEG_middleTrain', 'MI_MEG_eachTrain']:
+    print(pre_)
+    pdf_path = os.path.join(result_dir, '%s_%s.pdf' % (pre_, 
+                            time.strftime('%Y-%m-%d-%H-%M-%S')))
+    # target_dir = [e for e in os.listdir(result_dir) if e.startswith(pre_)]
+    target_dir = listdir(result_dir, pre=pre_)
+    assert(len(target_dir) == 1)
+    target_dir = os.path.join(result_dir, target_dir[0])
 
-figures = []
+    figures = []
 
-for freq in [30, 60, 90, 120]:
-    # load variables from npz file
-    data = np.load(npz_path % str(freq))
-    scores = data['scores'].tolist()
-    w_times = data['w_times']
+    npz_fname_list = os.listdir(target_dir)
+    npz_fname_list.sort(key=lambda s:float(s[4:-4]))
+    [print(e) for e in npz_fname_list]
 
-    f = plt.figure()
+    for npz_fname in npz_fname_list:
+        # load variables from npz file
+        data = np.load(os.path.join(target_dir, npz_fname))
+        scores = data['scores'].tolist()
+        w_times = data['w_times']
 
-    for clf_name in scores.keys():
-        plt.plot(w_times, np.mean(np.mean(scores[clf_name], 0), 0),
-                 label=clf_name)
+        f = plt.figure()
 
-    plt.axvline(0, linestyle='--', color='k', label='Onset')
-    plt.axhline(0.5, linestyle='-', color='k', label='Chance')
-    plt.xlabel('time (s)')
-    plt.ylabel('classification accuracy')
-    plt.title('Classification score over time %sHz' % str(freq))
-    plt.legend(loc='lower right')
-    figures.append(f)
+        for clf_name in scores.keys():
+            plt.plot(w_times, np.mean(np.mean(scores[clf_name], 0), 0),
+                     label=clf_name)
 
-    # Saving into pdf
-    print('Saving into pdf.')
-    with PdfPages(pdf_path) as pp:
-        for f in figures:
-            pp.savefig(f)
+        plt.axvline(0, linestyle='--', color='k', label='Onset')
+        plt.axhline(0.5, linestyle='-', color='k', label='Chance')
+        plt.xlabel('time (s)')
+        plt.ylabel('classification accuracy')
+        plt.title('Classification score over time %sHz' % npz_fname[4:-4])
+        plt.legend(loc='lower right')
+        figures.append(f)
+
+        # Saving into pdf
+        print('Saving into pdf.')
+        with PdfPages(pdf_path) as pp:
+            for f in figures:
+                pp.savefig(f)
 
 # Finally, we show all figures.
-plt.show()
+# plt.show()
+plt.close('all')
