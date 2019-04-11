@@ -11,6 +11,16 @@ from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
 import time
 
+'''
+This script is to score MEG Motiong Imaging data.
+Scoring is using MVPA and cross-validation.
+Training data is cropped from 1.0~2.0 seconds, so names as middleTrain.
+There are several filter parameters in preprocessing.
+Using csp for feature extraction.
+Using LR, SVM and LDA as classifier.
+Saving scores into npz files.
+'''
+
 ##############
 # Parameters #
 ##############
