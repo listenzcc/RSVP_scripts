@@ -101,7 +101,7 @@ freqs = np.logspace(*np.log10([freq_l, freq_h]), num=num)
 for eid in event_id.keys():
     power, itc = mne.time_frequency.tfr_morlet(
         epochs[eid], freqs=freqs, n_cycles=n_cycles,
-        return_itc=True, decim=decim, n_jobs=n_jobs, verbose=True)
+        return_itc=True, n_jobs=n_jobs, verbose=True)
     f = power.plot_joint(baseline=baseline, mode='mean',
                          tmin=tmin, tmax=tmax, layout=layout,
                          title=eid, show=False)
