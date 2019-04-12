@@ -42,7 +42,7 @@ subject_name = '20190402_MI_EEG_maxuelin'
 cnt_files = ['mxl_MI_1.cnt', 'mxl_MI_2.cnt']
 
 # Parameter for preprocess raw
-freq_l, freq_h = 1, 120
+freq_l, freq_h = 7, 120
 fir_design = 'firwin'
 meg = False
 ref_meg = False

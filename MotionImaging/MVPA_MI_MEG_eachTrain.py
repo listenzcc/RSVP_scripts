@@ -44,7 +44,7 @@ subject_idx = 2
 run_idx = [1, 2]
 
 # Parameter for preprocess raw
-freq_l, freq_h = 1, 360
+freq_l, freq_h = 7, 360
 fir_design = 'firwin'
 meg = True
 ref_meg = False

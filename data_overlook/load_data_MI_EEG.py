@@ -7,6 +7,11 @@ import numpy as np
 import os
 import time
 
+'''
+This script is a demo of loading EEG Motion Imaging data,
+and plot the nature of the data into pdf file.
+'''
+
 ##############
 # Parameters #
 ##############
@@ -14,7 +19,7 @@ print('Initing parameters.')
 # Results pdf path
 pdf_path = os.path.join('D:\\', 'RSVP_MEG_experiment', 'scripts',
                         'data_overlook', 'results',
-                        'foo_%s.pdf' % time.strftime('%Y-%m-%d-%H-%M-%S'))
+                        'MI_EEG_%s.pdf' % time.strftime('%Y-%m-%d-%H-%M-%S'))
 if not os.path.exists(os.path.dirname(pdf_path)):
     os.mkdir(os.path.dirname(pdf_path))
 # Parameter for read raw
@@ -24,7 +29,7 @@ subject_name = '20190402_MI_EEG_maxuelin'
 cnt_files = ['mxl_MI_1.cnt', 'mxl_MI_2.cnt']
 
 # Parameter for preprocess raw
-freq_l, freq_h = 1, 360
+freq_l, freq_h = 7, 120
 fir_design = 'firwin'
 meg = False
 ref_meg = False
@@ -34,7 +39,7 @@ exclude = 'bads'
 # Parameter for epochs
 event_id = dict(MI1=1, MI2=2)
 tmin, t0, tmax = -1, 0, 4
-freq = 360
+freq = 120
 decim = 1
 reject = dict()
 stim_channel = 'STI 014'
