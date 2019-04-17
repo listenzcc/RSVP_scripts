@@ -5,6 +5,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import mne
 import numpy as np
 import os
+import sys
 import time
 
 '''
@@ -17,22 +18,25 @@ and plot the nature of the data into pdf file.
 ##############
 print('Initing parameters.')
 # Results pdf path
-pdf_path = os.path.join('D:\\', 'RSVP_MEG_experiment', 'scripts',
+home_path = os.path.join('/', 'nfs', 'cell_a', 'userhome', 'zcc')
+pdf_path = os.path.join(home_path, 'Documents','RSVP_MEG_experiment', 'scripts',
                         'data_overlook', 'results',
                         'RSVP_MEG_%s.pdf' % time.strftime('%Y-%m-%d-%H-%M-%S'))
 if not os.path.exists(os.path.dirname(pdf_path)):
     os.mkdir(os.path.dirname(pdf_path))
 # Parameter for read raw
-file_dir = os.path.join('D:\\', 'RSVP_MEG_experiment', 'rawdata',
+file_dir = os.path.join(home_path, 'Documents','RSVP_MEG_experiment', 'rawdata',
                         '20190326_RSVP_MEG_%s',
                         'S%02d_lixiangTHU_20190326_%02d.ds')
 subject_name = 'maxuelin'
 subject_idx = 2
-run_idx = [e for e in range(4, 12)]
-run_idx = run_idx[-4:]
+if len(sys.argv) > 1:
+    subject_name = sys.argv[1]
+    subject_idx = int(sys.argv[2])
+run_idx = [e for e in range(4, 11)]
 
 # Parameter for preprocess raw
-freq_l, freq_h = 7, 360
+freq_l, freq_h = 7, 120
 fir_design = 'firwin'
 meg = True
 ref_meg = False
@@ -40,8 +44,8 @@ exclude = 'bads'
 
 # Parameter for epochs
 event_id = dict(R1=1, R2=2, R3=3)
-tmin, t0, tmax = -1, 0, 4
-freq = 360
+tmin, t0, tmax = -0.2, 0, 1
+freq = 120
 decim = 1
 reject = dict(mag=5e-12)
 stim_channel = 'UPPT001'
@@ -117,10 +121,10 @@ freqs = np.logspace(*np.log10([freq_l, freq_h]), num=num)
 for eid in event_id.keys():
     power, itc = mne.time_frequency.tfr_morlet(
         epochs[eid], freqs=freqs, n_cycles=n_cycles,
-        return_itc=True, decim=decim, n_jobs=n_jobs, verbose=True)
+        return_itc=True, n_jobs=n_jobs, verbose=True)
     f = power.plot_joint(baseline=baseline, mode='mean',
                          tmin=tmin, tmax=tmax, layout=layout,
-                         title=eid, show=False)
+                         title=subject_name+eid, show=False)
     figures.append(f)
 
 # Saving into pdf
@@ -130,4 +134,5 @@ with PdfPages(pdf_path) as pp:
         pp.savefig(f)
 
 # Finally, we show figures.
-plt.show()
+# plt.show()
+plt.close('all')
