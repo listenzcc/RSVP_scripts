@@ -12,9 +12,10 @@ from sklearn.svm import SVC
 import time
 
 '''
-This script is to score EEG Motiong Imaging data.
+This script is to score MEG Motiong Imaging data.
 Scoring is using MVPA and cross-validation.
-Training data is cropped from 1.0~2.0 seconds, so names as middleTrain.
+Training data and testing data is matched in time crop,
+so names as eachTrain.
 There are several filter parameters in preprocessing.
 Using csp for feature extraction.
 Using LR, SVM and LDA as classifier.
@@ -24,7 +25,7 @@ Saving scores into npz files.
 ##############
 # Parameters #
 ##############
-time_stamp = time.strftime('MI_EEG_middleTrain_%Y-%m-%d-%H-%M-%S')
+time_stamp = time.strftime('MI_MEG_eachTrain_%Y-%m-%d-%H-%M-%S')
 print('Initing parameters.')
 # Results pdf path
 result_dir = os.path.join('D:\\', 'RSVP_MEG_experiment', 'scripts',
@@ -36,27 +37,27 @@ npz_path = os.path.join(result_dir, 'npz_%s.npz')
 
 # Parameter for read raw
 file_dir = os.path.join('D:\\', 'RSVP_MEG_experiment', 'rawdata',
-                        '%s', '%s')
-subject_name = '20190402_MI_EEG_maxuelin'
-cnt_files = ['mxl_MI_1.cnt', 'mxl_MI_2.cnt']
+                        '20190326_MI_MEG_%s',
+                        'S%02d_lixiangTHU_20190326_%02d.ds')
+subject_name = 'maxuelin'
+subject_idx = 2
+run_idx = [1, 2]
 
 freq_l = 7
 for freq_h in [30, 60, 120]:
     # Parameter for preprocess raw
     fir_design = 'firwin'
-    meg = False
+    meg = True
     ref_meg = False
-    eeg = True
     exclude = 'bads'
 
     # Parameter for epochs
     event_id = dict(MI1=1, MI2=2)
     tmin, t0, tmax = -1, 0, 4
     freq_resample = 240
-
     decim = 1
-    reject = dict()
-    stim_channel = 'STI 014'
+    reject = dict(mag=5e-12)
+    stim_channel = 'UPPT001'
 
     # frequency
     n_cycles = 2
@@ -72,13 +73,13 @@ for freq_h in [30, 60, 120]:
     n_jobs = 12
 
     # prepare rawobject
-    motage = mne.channels.read_montage('standard_1020')
-    raw_files = [mne.io.read_raw_cnt(
-        file_dir % (subject_name, j), motage, preload=True) for j in cnt_files]
+    raw_files = [mne.io.read_raw_ctf(
+        file_dir % (subject_name, subject_idx, j), preload=True)
+        for j in run_idx]
     raw = mne.concatenate_raws(raw_files)
     raw.filter(freq_l, freq_h, fir_design=fir_design)
     # choose channel type
-    picks = mne.pick_types(raw.info, eeg=eeg, exclude=exclude)
+    picks = mne.pick_types(raw.info, meg=meg, ref_meg=ref_meg, exclude=exclude)
 
     #############
     # Let it go #
@@ -148,14 +149,14 @@ for freq_h in [30, 60, 120]:
             train_idx, test_idx = idxs
             # labels
             y_train, y_test = labels[train_idx], labels[test_idx]
-            # training data
-            X_train = epochs_data_train[train_idx]
             for clf_name in clf_dict.keys():
                 print(clf_name)
                 clf_pipeline = clf_pipelines[clf_name]
-                # fit
-                clf_pipeline.fit(X_train, y_train)
                 for w, n in enumerate(w_start):
+                    # training data
+                    X_train = epochs_data[train_idx][:, :, n:(n+2*w_length)]
+                    # fit
+                    clf_pipeline.fit(X_train, y_train)
                     # testing data
                     X_test = epochs_data[test_idx][:, :, n:(n+w_length)]
                     # score

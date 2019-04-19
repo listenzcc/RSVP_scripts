@@ -39,8 +39,8 @@ def listdir(dirpath, pre=''):
 
 npz_path = os.path.join(result_dir, 'npz_%s.npz')
 
-for pre_ in ['MI_EEG_middleTrain_2019-04-19',
-             'MI_MEG_middleTrain_2019-04-19']:
+for pre_ in ['MI_EEG_slidingTrain_2019-04-19',
+             'MI_MEG_slidingTrain_2019-04-19']:
     print(pre_)
     pdf_path = os.path.join(result_dir,
                             '%s_%s.pdf' % (
@@ -64,8 +64,11 @@ for pre_ in ['MI_EEG_middleTrain_2019-04-19',
         f = plt.figure()
 
         for clf_name in scores.keys():
-            plt.plot(w_times, np.mean(np.mean(scores[clf_name], 0), 0),
-                     label=clf_name)
+            s = scores[clf_name]
+            print(s.shape)
+            while len(s.shape) > 1:
+                s = np.mean(s, 0)
+            plt.plot(w_times, s, label=clf_name)
 
         plt.axvline(0, linestyle='--', color='k', label='Onset')
         plt.axhline(0.5, linestyle='-', color='k', label='Chance')

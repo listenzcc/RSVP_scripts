@@ -14,7 +14,8 @@ import time
 '''
 This script is to score EEG Motiong Imaging data.
 Scoring is using MVPA and cross-validation.
-Training data is cropped from 1.0~2.0 seconds, so names as middleTrain.
+Training data and testing data is matched in time crop,
+so names as eachTrain.
 There are several filter parameters in preprocessing.
 Using csp for feature extraction.
 Using LR, SVM and LDA as classifier.
@@ -24,7 +25,7 @@ Saving scores into npz files.
 ##############
 # Parameters #
 ##############
-time_stamp = time.strftime('MI_EEG_middleTrain_%Y-%m-%d-%H-%M-%S')
+time_stamp = time.strftime('MI_EEG_eachTrain_%Y-%m-%d-%H-%M-%S')
 print('Initing parameters.')
 # Results pdf path
 result_dir = os.path.join('D:\\', 'RSVP_MEG_experiment', 'scripts',
@@ -53,7 +54,6 @@ for freq_h in [30, 60, 120]:
     event_id = dict(MI1=1, MI2=2)
     tmin, t0, tmax = -1, 0, 4
     freq_resample = 240
-
     decim = 1
     reject = dict()
     stim_channel = 'STI 014'
@@ -148,14 +148,14 @@ for freq_h in [30, 60, 120]:
             train_idx, test_idx = idxs
             # labels
             y_train, y_test = labels[train_idx], labels[test_idx]
-            # training data
-            X_train = epochs_data_train[train_idx]
             for clf_name in clf_dict.keys():
                 print(clf_name)
                 clf_pipeline = clf_pipelines[clf_name]
-                # fit
-                clf_pipeline.fit(X_train, y_train)
                 for w, n in enumerate(w_start):
+                    # training data
+                    X_train = epochs_data[train_idx][:, :, n:(n+2*w_length)]
+                    # fit
+                    clf_pipeline.fit(X_train, y_train)
                     # testing data
                     X_test = epochs_data[test_idx][:, :, n:(n+w_length)]
                     # score
@@ -166,5 +166,5 @@ for freq_h in [30, 60, 120]:
     w_times = (w_start + w_length / 2.) / sfreq + epochs.tmin
 
     # save into npz file
-    np.savez(npz_path % 'l_%0.1f_h_%0.2f' % (freq_l, freq_h),
-        scores=scores, w_times=w_times)
+    np.savez(npz_path % 'l_%0.1f_h_%0.2f' % (freq_l, freq_h), 
+        cores=scores, w_times=w_times)
