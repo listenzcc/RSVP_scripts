@@ -39,8 +39,8 @@ def listdir(dirpath, pre=''):
 
 npz_path = os.path.join(result_dir, 'npz_%s.npz')
 
-for pre_ in ['MI_EEG_slidingTrain_2019-04-19',
-             'MI_MEG_slidingTrain_2019-04-19']:
+for pre_ in ['MI_MEG_middleTrain',
+             'MI_EEG_middleTrain']:
     print(pre_)
     pdf_path = os.path.join(result_dir,
                             '%s_%s.pdf' % (

@@ -22,7 +22,7 @@ Scoring is using MVPA and cross-validation.
 Training data is cropped from 1.0~2.0 seconds, so names as middleTrain.
 There are several filter parameters in preprocessing.
 Using csp for feature extraction.
-Using LR, SVM and LDA as classifier.
+Using OneClassSVM as classifier.
 Saving scores into npz files.
 '''
 
@@ -52,16 +52,16 @@ subject_idx = 2
 run_idx = [5, 7]
 
 # Parameter for preprocess raw
-freq_l, freq_h = 0.1, 50
+freq_l, freq_h = 7, 60
 fir_design = 'firwin'
 meg = True
 ref_meg = False
 exclude = 'bads'
 
 # Parameter for epochs
-event_id = dict(MI1=1, MI2=2)
+event_id = dict(Odd=1, Norm=2)
 tmin, t0, tmax = -0.2, 0, 1
-freq = 180
+freq_resample = 240
 decim = 1
 reject = dict(mag=5e-12)
 stim_channel = 'UPPT001'
@@ -99,7 +99,7 @@ epochs = mne.Epochs(raw, event_id=event_id, events=events,
                     decim=decim, tmin=tmin, tmax=tmax,
                     picks=picks, baseline=baseline,
                     reject=reject, preload=True)
-epochs.resample(125, npad="auto")
+epochs.resample(freq_resample, npad="auto")
 
 # Exclude abscent channels in layout
 ch_names = [e[0:5] for e in epochs.ch_names]
@@ -116,15 +116,10 @@ epochs_data = epochs.get_data()
 epochs_data_train = epochs_train.get_data()
 
 # CSP LR demo
+cv = ShuffleSplit(n_folder, test_size=0.2)
 csp = mne.decoding.CSP(n_components=n_components, reg=None,
                        log=True, norm_trace=False)
-# csp.fit_transform(epochs_data_train, labels)
-# csp.plot_patterns(epochs.info, show=False)
-cv = ShuffleSplit(n_folder, test_size=0.2)
-lr = LogisticRegression(solver='lbfgs')
-svc = svm.SVC(gamma='auto', probability=True)
-ocsvm = svm.OneClassSVM(nu=0.1, gamma='auto', probability=True)
-lda = LinearDiscriminantAnalysis()
+ocsvm = svm.OneClassSVM(nu=0.1, gamma='auto')
 
 # MVPA time_resolution
 # make windows
@@ -137,23 +132,16 @@ print('repeat_times:', repeat_times)
 print('n_folder:', cv.get_n_splits())
 print('windows_number:', len(w_start))
 
-# prepare clf_pipelines and scores
-clf_dict = dict(lr=lr, svc=svc, lda=lda)
-clf_dict = dict(ocsvm=ocsvm)
-clf_pipelines = dict()
-scores = dict()
-for clf in clf_dict.items():
-    clf_pipelines[clf[0]] = make_pipeline(
-        mne.decoding.Scaler(epochs_train.info),
-        csp, mne.decoding.Vectorizer(), clf[1])
-    scores[clf[0]] = np.zeros(
-        [repeat_times, cv.get_n_splits(), len(w_start)])
+# prepare csp_pipelines and scores
+csp_pipeline = make_pipeline(
+    mne.decoding.Scaler(epochs_train.info),
+    csp, mne.decoding.Vectorizer())
+scores = np.zeros(
+    [repeat_times, cv.get_n_splits(), len(w_start)])
 # sccuracy
 scores_Acc = deepcopy(scores)
 # recall
 scores_Rec = deepcopy(scores)
-# area under roc
-scores_Auc = deepcopy(scores)
 
 for rep in range(repeat_times):
     # for each repeat
@@ -166,41 +154,35 @@ for rep in range(repeat_times):
         y_train, y_test = labels[train_idx], labels[test_idx]
         # training data
         X_train = epochs_data_train[train_idx]
-        for clf_name in clf_dict.keys():
-            print(clf_name)
-            clf_pipeline = clf_pipelines[clf_name]
-            # fit
-            clf_pipeline.fit(X_train, y_train)
-            for w, n in enumerate(w_start):
-                # testing data
-                X_test = epochs_data[test_idx][:, :, n:(n+w_length)]
 
-                # predicting data
-                y_prob = clf_pipeline.predict_proba(X_test)
-                y_predict = y_test * 0 + 2
-                for j in range(len(y_predict)):
-                    if y_prob[j][0] > y_prob[j][1]:
-                        y_predict[j] = 1
+        # fit
+        X_train_csp = csp_pipeline.fit_transform(X_train, y_train)
+        ocsvm.fit(X_train_csp[y_train == 2])
 
-                # scoring acc
-                score_acc = metrics.accuracy_score(y_test, y_predict)
-                # scoring rec
-                score_rec = metrics.recall_score(y_test, y_predict)
-                # scoring auc
-                score_auc = metrics.roc_auc_score(y_test == 1, y_prob[:, 0])
+        for w, n in enumerate(w_start):
+            # testing data
+            X_test = epochs_data[test_idx][:, :, n:(n+w_length)]
 
-                # storing scores
-                scores_Acc[clf_name][rep, split, w] = score_acc
-                scores_Rec[clf_name][rep, split, w] = score_rec
-                scores_Auc[clf_name][rep, split, w] = score_auc
+            X_test_csp = csp_pipeline.transform(X_test)
+
+            y_predict = ocsvm.predict(X_test_csp)
+            y_predict = y_predict * 0.5 + 1.5
+
+            # scoring acc
+            score_acc = metrics.accuracy_score(y_test, y_predict)
+            # scoring rec
+            score_rec = metrics.recall_score(y_test, y_predict)
+
+            # storing scores
+            scores_Acc[rep, split, w] = score_acc
+            scores_Rec[rep, split, w] = score_rec
 
 
 # time line
 w_times = (w_start + w_length / 2.) / sfreq + epochs.tmin
 
 # save into npz file
-np.savez(npz_path % str(freq),
+np.savez(npz_path % str(freq_resample),
          scores_Acc=scores_Acc,
          scores_Rec=scores_Rec,
-         scores_Auc=scores_Auc,
          w_times=w_times)

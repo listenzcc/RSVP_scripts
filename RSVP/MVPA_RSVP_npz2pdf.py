@@ -57,16 +57,23 @@ for pre_ in ['RSVP_MEG_middleTrain']:
     for npz_fname in npz_fname_list:
         # load variables from npz file
         data = np.load(os.path.join(target_dir, npz_fname))
-        for score_method in ['Auc', 'Rec', 'Auc']:
-            scores = data['scores_%s' % score_method].tolist()
+        for score_method in ['Auc', 'Rec', 'Acc']:
+            tmp_scores = data.get('scores_%s' % score_method, 'null')
+            if tmp_scores == 'null':
+                continue
+            scores = tmp_scores.tolist()
             w_times = data['w_times']
             print(w_times)
 
             f = plt.figure()
 
-            for clf_name in scores.keys():
-                plt.plot(w_times, np.mean(np.mean(scores[clf_name], 0), 0),
-                         label=clf_name)
+            if type(scores) == 'dict':
+                for clf_name in scores.keys():
+                    plt.plot(w_times, np.mean(np.mean(scores[clf_name], 0), 0),
+                             label=clf_name)
+            else:
+                plt.plot(w_times, np.mean(np.mean(scores, 0), 0),
+                         label='OneClassSVM')
 
             plt.axvline(0, linestyle='--', color='k', label='Onset')
             # plt.axhline(0.5, linestyle='-', color='k', label='Chance')

@@ -167,4 +167,4 @@ for freq_h in [30, 60, 120]:
 
     # save into npz file
     np.savez(npz_path % 'l_%0.1f_h_%0.2f' % (freq_l, freq_h), 
-        cores=scores, w_times=w_times)
+        scores=scores, w_times=w_times)
