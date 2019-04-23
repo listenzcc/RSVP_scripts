@@ -29,8 +29,7 @@ Saving scores into npz files.
 ##############
 # Parameters #
 ##############
-time_stamp = time.strftime(
-    'RSVP_MEG_middleTrain_OneClassSVM_%Y-%m-%d-%H-%M-%S')
+time_stamp = time.strftime('RSVP_MEG_eachTrain_OneClassSVM_%Y-%m-%d-%H-%M-%S')
 print('Initing parameters.')
 # Results pdf path
 root_path = os.path.join('D:\\', 'RSVP_MEG_experiment', 'scripts', 'RSVP')
@@ -72,7 +71,6 @@ n_cycles = 2
 num = 20
 
 # MVPA
-tmin_middle, tmax_middle = 0.1, 0.3
 n_components = 6
 repeat_times = 10
 n_folder = 10
@@ -111,10 +109,8 @@ print('Exclude channels are', ex)
 layout = mne.find_layout(epochs.info, exclude=ex)
 
 # MVPA
-epochs_train = epochs.copy().crop(tmin=tmin_middle, tmax=tmax_middle)
 labels = epochs.events[:, -1]
 epochs_data = epochs.get_data()
-epochs_data_train = epochs_train.get_data()
 
 # CSP LR demo
 cv = ShuffleSplit(n_folder, test_size=0.2)
@@ -135,7 +131,7 @@ print('windows_number:', len(w_start))
 
 # prepare csp_pipelines and scores
 csp_pipeline = make_pipeline(
-    mne.decoding.Scaler(epochs_train.info),
+    mne.decoding.Scaler(epochs.info),
     csp, mne.decoding.Vectorizer())
 scores = np.zeros(
     [repeat_times, cv.get_n_splits(), len(w_start)])
@@ -153,14 +149,15 @@ for rep in range(repeat_times):
         train_idx, test_idx = idxs
         # labels
         y_train, y_test = labels[train_idx], labels[test_idx]
-        # training data
-        X_train = epochs_data_train[train_idx]
-
-        # fit
-        X_train_csp = csp_pipeline.fit_transform(X_train, y_train)
-        ocsvm.fit(X_train_csp[y_train == 2])
 
         for w, n in enumerate(w_start):
+            # training data
+            X_train = epochs_data[train_idx][:, :, n:(n+w_length)]
+
+            # fit
+            X_train_csp = csp_pipeline.fit_transform(X_train, y_train)
+            ocsvm.fit(X_train_csp[y_train == 2])
+
             # testing data
             X_test = epochs_data[test_idx][:, :, n:(n+w_length)]
 
