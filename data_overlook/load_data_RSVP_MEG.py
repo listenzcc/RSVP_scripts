@@ -18,25 +18,27 @@ and plot the nature of the data into pdf file.
 ##############
 print('Initing parameters.')
 # Results pdf path
-home_path = os.path.join('/', 'nfs', 'cell_a', 'userhome', 'zcc')
-pdf_path = os.path.join(home_path, 'Documents','RSVP_MEG_experiment', 'scripts',
-                        'data_overlook', 'results',
+root_path = os.path.join('D:/', 'RSVP_MEG_experiment',
+                         'scripts', 'data_overlook')
+pdf_path = os.path.join(root_path, '..', 'results',
                         'RSVP_MEG_%s.pdf' % time.strftime('%Y-%m-%d-%H-%M-%S'))
 if not os.path.exists(os.path.dirname(pdf_path)):
     os.mkdir(os.path.dirname(pdf_path))
 # Parameter for read raw
-file_dir = os.path.join(home_path, 'Documents','RSVP_MEG_experiment', 'rawdata',
+file_dir = os.path.join(root_path, '..', '..', 'rawdata',
                         '20190326_RSVP_MEG_%s',
                         'S%02d_lixiangTHU_20190326_%02d.ds')
 subject_name = 'maxuelin'
 subject_idx = 2
-if len(sys.argv) > 1:
-    subject_name = sys.argv[1]
-    subject_idx = int(sys.argv[2])
+# if len(sys.argv) > 1:
+#     subject_name = sys.argv[1]
+#     subject_idx = int(sys.argv[2])
 run_idx = [e for e in range(4, 11)]
+run_idx = run_idx[-3:-1]
+run_idx = [8]
 
 # Parameter for preprocess raw
-freq_l, freq_h = 7, 120
+freq_l, freq_h = 0.1, 30
 fir_design = 'firwin'
 meg = True
 ref_meg = False
@@ -44,9 +46,9 @@ exclude = 'bads'
 
 # Parameter for epochs
 event_id = dict(R1=1, R2=2, R3=3)
-tmin, t0, tmax = -0.2, 0, 1
-freq = 120
-decim = 1
+tmin, t0, tmax = -0.5, 0, 2
+freq_resample = 240
+decim = 10
 reject = dict(mag=5e-12)
 stim_channel = 'UPPT001'
 
@@ -66,17 +68,17 @@ raw_files = [mne.io.read_raw_ctf(
 # including 2 target pictures.
 
 
-def cal_events_nun(events):
+def cal_events_num(events):
     label = events[:, -1]
     print(events.shape)
     [print(e, ':', sum(label == e)) for e in [1, 2, 3]]
 
 
-[cal_events_nun(mne.find_events(e, stim_channel=stim_channel))
+[cal_events_num(mne.find_events(e, stim_channel=stim_channel))
  for e in raw_files]
 
 raw = mne.concatenate_raws(raw_files)
-raw.filter(freq_l, freq_h, fir_design=fir_design)
+# raw.filter(freq_l, freq_h, fir_design=fir_design)
 # choose channel type
 picks = mne.pick_types(raw.info, meg=meg, ref_meg=ref_meg, exclude=exclude)
 
@@ -91,7 +93,7 @@ epochs = mne.Epochs(raw, event_id=event_id, events=events,
                     decim=decim, tmin=tmin, tmax=tmax,
                     picks=picks, baseline=baseline,
                     reject=reject, preload=True)
-epochs.resample(freq, npad="auto")
+epochs.resample(freq_resample, npad="auto")
 
 # Exclude abscent channels in layout
 ch_names = [e[0:5] for e in epochs.ch_names]
@@ -104,6 +106,12 @@ layout = mne.find_layout(epochs.info, exclude=ex)
 # Get evoked
 keys = [_ for _ in event_id.keys()]
 evokeds = [epochs[eid].average() for eid in keys]
+
+evokeds[0].plot(spatial_colors=True, show=False)
+evokeds[1].plot(spatial_colors=True, show=False)
+
+plt.show()
+stophere
 
 figures = []
 
