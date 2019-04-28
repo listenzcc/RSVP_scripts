@@ -114,4 +114,4 @@ with PdfPages(pdf_path) as pp:
         pp.savefig(f)
 
 # Finally, we show figures.
-plt.show()
+plt.close('all')
