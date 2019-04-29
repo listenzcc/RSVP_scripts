@@ -34,11 +34,10 @@ subject_idx = 2
 #     subject_name = sys.argv[1]
 #     subject_idx = int(sys.argv[2])
 run_idx = [e for e in range(4, 11)]
-run_idx = run_idx[-3:-1]
-run_idx = [8]
+run_idx = run_idx[-4:]
 
 # Parameter for preprocess raw
-freq_l, freq_h = 0.1, 30
+freq_l, freq_h = 0.1, 7
 fir_design = 'firwin'
 meg = True
 ref_meg = False
@@ -46,8 +45,8 @@ exclude = 'bads'
 
 # Parameter for epochs
 event_id = dict(R1=1, R2=2, R3=3)
-tmin, t0, tmax = -0.5, 0, 2
-freq_resample = 240
+tmin, t0, tmax = -0.2, 0, 1
+freq_resample = 100
 decim = 10
 reject = dict(mag=5e-12)
 stim_channel = 'UPPT001'
@@ -74,13 +73,22 @@ def cal_events_num(events):
     [print(e, ':', sum(label == e)) for e in [1, 2, 3]]
 
 
+[e.filter(freq_l, freq_h, fir_design=fir_design) for e in raw_files]
+
 [cal_events_num(mne.find_events(e, stim_channel=stim_channel))
  for e in raw_files]
 
 raw = mne.concatenate_raws(raw_files)
+ch_names = raw.info['ch_names']
 # raw.filter(freq_l, freq_h, fir_design=fir_design)
 # choose channel type
-picks = mne.pick_types(raw.info, meg=meg, ref_meg=ref_meg, exclude=exclude)
+picks_all_meg = mne.pick_types(
+    raw.info, meg=meg, ref_meg=ref_meg, exclude=exclude)
+
+picks = [j for j in picks_all_meg if
+         ch_names[j].startswith('MLO') or
+         ch_names[j].startswith('MRO') or
+         ch_names[j].startswith('MRO')]
 
 #############
 # Let it go #
@@ -107,12 +115,6 @@ layout = mne.find_layout(epochs.info, exclude=ex)
 keys = [_ for _ in event_id.keys()]
 evokeds = [epochs[eid].average() for eid in keys]
 
-evokeds[0].plot(spatial_colors=True, show=False)
-evokeds[1].plot(spatial_colors=True, show=False)
-
-plt.show()
-stophere
-
 figures = []
 
 # Plot evoked
@@ -120,27 +122,7 @@ print('Plotting evoked.')
 for j, e in enumerate(evokeds):
     f = e.plot(spatial_colors=True, window_title=keys[j], show=False)
     figures.append(f)
-    f = e.plot_joint(title=keys[j], show=False)
-    figures.append(f)
+    # f = e.plot_joint(title=keys[j], show=False)
+    # figures.append(f)
 
-# Calculate and plot temporal-frequency
-print('Caling and ploting temporal-frequency.')
-freqs = np.logspace(*np.log10([freq_l, freq_h]), num=num)
-for eid in event_id.keys():
-    power, itc = mne.time_frequency.tfr_morlet(
-        epochs[eid], freqs=freqs, n_cycles=n_cycles,
-        return_itc=True, n_jobs=n_jobs, verbose=True)
-    f = power.plot_joint(baseline=baseline, mode='mean',
-                         tmin=tmin, tmax=tmax, layout=layout,
-                         title=subject_name+eid, show=False)
-    figures.append(f)
-
-# Saving into pdf
-print('Saving into pdf.')
-with PdfPages(pdf_path) as pp:
-    for f in figures:
-        pp.savefig(f)
-
-# Finally, we show figures.
-# plt.show()
-plt.close('all')
+plt.show()

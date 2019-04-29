@@ -26,7 +26,7 @@ if not os.path.exists(os.path.dirname(pdf_path)):
 # Parameter for read raw
 file_dir = os.path.join(root_path, '..', '..', 'rawdata', 'ww_RSVP',
                         '%s', 'ww_rsvp_%d.cnt')
-subject_name = '20190226_RSVP_EEG_weiwei'
+subject_name = '20190228_RSVP_EEG_weiwei'
 cnt_files_idx = [2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15]
 cnt_files_idx = [10, 11, 12]
 
@@ -40,7 +40,7 @@ exclude = ['M1', 'M2', 'bads']
 
 # Parameter for epochs
 event_id = dict(R1=1, R2=2, R3=3)
-tmin, t0, tmax = -1, 0, 1
+tmin, t0, tmax = -0.2, 0, 1
 freq_resample = 100
 decim = 1
 reject = dict()
@@ -67,11 +67,13 @@ def cal_events_num(events):
     [print(e, ':', sum(label == e)) for e in [1, 2, 3]]
 
 
+[e.filter(freq_l, freq_h, fir_design=fir_design) for e in raw_files]
+
 [cal_events_num(mne.find_events(e, stim_channel=stim_channel))
  for e in raw_files]
 
 raw = mne.concatenate_raws(raw_files)
-raw.filter(freq_l, freq_h, fir_design=fir_design)
+# raw.filter(freq_l, freq_h, fir_design=fir_design)
 # choose channel type
 picks = mne.pick_types(raw.info, eeg=eeg, exclude=exclude)
 
@@ -82,7 +84,6 @@ picks = mne.pick_types(raw.info, eeg=eeg, exclude=exclude)
 print('Getting epochs.')
 events = mne.find_events(raw, stim_channel=stim_channel)
 baseline = (None, 0)
-baseline = None
 epochs = mne.Epochs(raw, event_id=event_id, events=events,
                     decim=decim, tmin=tmin, tmax=tmax,
                     picks=picks, baseline=baseline,
