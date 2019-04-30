@@ -87,6 +87,7 @@ baseline = (None, 0)
 epochs = mne.Epochs(raw, event_id=event_id, events=events,
                     decim=decim, tmin=tmin, tmax=tmax,
                     picks=picks, baseline=baseline,
+                    detrend=1,
                     reject=reject, preload=True)
 # epochs.resample(freq_resample, npad="auto")
 
