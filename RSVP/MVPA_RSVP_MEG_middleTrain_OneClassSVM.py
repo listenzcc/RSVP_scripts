@@ -33,7 +33,8 @@ time_stamp = time.strftime(
     'RSVP_MEG_middleTrain_OneClassSVM_%Y-%m-%d-%H-%M-%S')
 print('Initing parameters.')
 # Results pdf path
-root_path = os.path.join('D:\\', 'RSVP_MEG_experiment', 'scripts', 'RSVP')
+# root_path = os.path.join('D:\\', 'RSVP_MEG_experiment', 'scripts', 'RSVP')
+root_path = os.path.join('/', 'nfs', 'cell_a', 'userhome', 'zcc', 'Documents', 'RSVP_MEG_experiment', 'scripts', 'RSVP')
 result_dir = os.path.join(root_path, 'results', time_stamp)
 if not os.path.exists(result_dir):
     os.mkdir(result_dir)
@@ -49,11 +50,11 @@ subject_idx = 2
 # if len(sys.argv) > 1:
 #     subject_name = sys.argv[1]
 #     subject_idx = int(sys.argv[2])
-# run_idx = [e for e in range(4, 11)]
-run_idx = [5, 7]
+run_idx = [e for e in range(4, 11)]
+# run_idx = [5, 7]
 
 # Parameter for preprocess raw
-freq_l, freq_h = 7, 60
+freq_l, freq_h = 0.1, 7
 fir_design = 'firwin'
 meg = True
 ref_meg = False
@@ -62,7 +63,7 @@ exclude = 'bads'
 # Parameter for epochs
 event_id = dict(Odd=1, Norm=2)
 tmin, t0, tmax = -0.2, 0, 1
-freq_resample = 240
+freq_resample = 200
 decim = 1
 reject = dict(mag=5e-12)
 stim_channel = 'UPPT001'
@@ -72,20 +73,21 @@ n_cycles = 2
 num = 20
 
 # MVPA
-tmin_middle, tmax_middle = 0.1, 0.3
+tmin_middle, tmax_middle = 0.2, 0.5
 n_components = 6
 repeat_times = 10
 n_folder = 10
 
 # multi cores
-n_jobs = 12
+n_jobs = 32
 
 # prepare rawobject
 raw_files = [mne.io.read_raw_ctf(
     file_dir % (subject_name, subject_idx, j), preload=True)
     for j in run_idx]
+[e.filter(freq_l, freq_h, fir_design=fir_design) for e in raw_files]
 raw = mne.concatenate_raws(raw_files)
-raw.filter(freq_l, freq_h, fir_design=fir_design)
+# raw.filter(freq_l, freq_h, fir_design=fir_design)
 # choose channel type
 picks = mne.pick_types(raw.info, meg=meg, ref_meg=ref_meg, exclude=exclude)
 
@@ -99,6 +101,7 @@ baseline = (tmin, t0)
 epochs = mne.Epochs(raw, event_id=event_id, events=events,
                     decim=decim, tmin=tmin, tmax=tmax,
                     picks=picks, baseline=baseline,
+                    detrend=1,
                     reject=reject, preload=True)
 epochs.resample(freq_resample, npad="auto")
 
