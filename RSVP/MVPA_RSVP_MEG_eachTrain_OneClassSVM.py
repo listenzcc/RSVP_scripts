@@ -166,23 +166,25 @@ for rep in range(repeat_times):
             X_test_csp = csp_pipeline.transform(X_test)
 
             y_predict = ocsvm.predict(X_test_csp)
+            # before: -1: outliers, 1: inliers
+            # after:   1: outliers, 2: inliers
             y_predict = y_predict * 0.5 + 1.5
 
             # scoring acc
             score_acc = metrics.accuracy_score(y_test, y_predict)
             # scoring rec
-            score_rec = metrics.recall_score(y_test, y_predict)
+            score_rec = metrics.recall_score(y_test, y_predict, average=None)
 
             # storing scores
             scores_Acc[rep, split, w] = score_acc
-            scores_Rec[rep, split, w] = score_rec
+            scores_Rec[rep, split, w] = score_rec[0]
 
 
 # time line
 w_times = (w_start + w_length / 2.) / sfreq + epochs.tmin
 
 # save into npz file
-np.savez(npz_path % str(freq_resample),
+np.savez(npz_path % 'csp',
          scores_Acc=scores_Acc,
          scores_Rec=scores_Rec,
          w_times=w_times)
