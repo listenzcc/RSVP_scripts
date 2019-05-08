@@ -39,7 +39,7 @@ def listdir(dirpath, pre=''):
 
 npz_path = os.path.join(result_dir, 'npz_%s.npz')
 
-for pre_ in ['RSVP_MEG_middleTrain']:
+for pre_ in ['RSVP_MEG_eachTrain_OneClassSVM_2019-05-07-09-00-53']:
     print(pre_)
     pdf_path = os.path.join(result_dir,
                             '%s_%s.pdf' % (
@@ -51,7 +51,7 @@ for pre_ in ['RSVP_MEG_middleTrain']:
     figures = []
 
     npz_fname_list = os.listdir(target_dir)
-    npz_fname_list.sort(key=lambda s: float(s[4:-4]))
+    npz_fname_list.sort(key=lambda s: s[4:-4])
     [print(e) for e in npz_fname_list]
 
     for npz_fname in npz_fname_list:
