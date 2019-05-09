@@ -9,6 +9,7 @@ import time
 import sys
 
 from copy import deepcopy
+from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import ShuffleSplit
@@ -118,6 +119,7 @@ epochs_data = epochs.get_data()
 cv = ShuffleSplit(n_folder, test_size=0.2)
 csp = mne.decoding.CSP(n_components=n_components, reg=None,
                        log=True, norm_trace=False)
+pca = PCA(n_components=n_components)
 ocsvm = svm.OneClassSVM(nu=0.1, gamma='auto')
 
 # MVPA time_resolution
@@ -131,10 +133,13 @@ print('repeat_times:', repeat_times)
 print('n_folder:', cv.get_n_splits())
 print('windows_number:', len(w_start))
 
-# prepare csp_pipelines and scores
-csp_pipeline = make_pipeline(
+# prepare feat_pipelines and scores
+feat_pipeline = make_pipeline(
     mne.decoding.Scaler(epochs.info),
     csp, mne.decoding.Vectorizer())
+feat_pipeline = make_pipeline(
+        mne.decoding.Scaler(epochs.info),
+        mne.decoding.Vectorizer(), pca)
 scores = np.zeros(
     [repeat_times, cv.get_n_splits(), len(w_start)])
 # sccuracy
@@ -157,15 +162,13 @@ for rep in range(repeat_times):
             X_train = epochs_data[train_idx][:, :, n:(n+w_length)]
 
             # fit
-            X_train_csp = csp_pipeline.fit_transform(X_train, y_train)
-            ocsvm.fit(X_train_csp[y_train == 2])
+            X_train_feat = feat_pipeline.fit_transform(X_train, y_train)
+            ocsvm.fit(X_train_feat[y_train == 2])
 
             # testing data
             X_test = epochs_data[test_idx][:, :, n:(n+w_length)]
-
-            X_test_csp = csp_pipeline.transform(X_test)
-
-            y_predict = ocsvm.predict(X_test_csp)
+            X_test_feat = feat_pipeline.transform(X_test)
+            y_predict = ocsvm.predict(X_test_feat)
             # before: -1: outliers, 1: inliers
             # after:   1: outliers, 2: inliers
             y_predict = y_predict * 0.5 + 1.5
@@ -184,7 +187,7 @@ for rep in range(repeat_times):
 w_times = (w_start + w_length / 2.) / sfreq + epochs.tmin
 
 # save into npz file
-np.savez(npz_path % 'csp',
+np.savez(npz_path % 'pca',
          scores_Acc=scores_Acc,
          scores_Rec=scores_Rec,
          w_times=w_times)
