@@ -23,7 +23,8 @@ import time
 # Output: id_string, customer identifier string.
 # Output: results_dir, directory for storing results.
 '''
-root_dir = os.path.join('D:\\', 'RSVP_MEG_experiment')
+root_dir = os.path.join('/', 'nfs', 'cell_a', 'userhome', 'zcc', 'Documents', 'RSVP_MEG_experiment')
+
 time_stamp = time.strftime('%Y-%m-%d-%H-%M-%S')
 id_string = 'RSVP_MEG'
 results_dir = os.path.join(root_dir, 'scripts', 'RSVP_MVPA', 'results')
@@ -31,12 +32,12 @@ results_dir = os.path.join(root_dir, 'scripts', 'RSVP_MVPA', 'results')
 labels = None
 epochs_data = None
 epochs_list = []
-for i in [5, 7, 9]:
+for i in range(3, 12):
     '''
     # Function: Reading epochs from -epo.fif.
     # Output: epochs, resampled epochs.
     '''
-    epo_path = os.path.join(results_dir, 'eeg_mxl_epochs_%d-epo.fif' % i)
+    epo_path = os.path.join(results_dir, 'meg_mxl_epochs_%d-epo.fif' % i)
 
     epochs = mne.read_epochs(epo_path, verbose=True)
     epochs.crop(tmin=0.0, tmax=0.8)
@@ -70,7 +71,7 @@ epochs = mne.concatenate_epochs(epochs_list)
 '''
 pca = PCA(n_components=8)
 csp = mne.decoding.CSP(n_components=8)
-xdawn = mne.preprocessing.Xdawn(n_components=8)
+xdawn = mne.preprocessing.Xdawn(n_components=6)
 
 cv = ShuffleSplit(10, test_size=0.1)
 pca_pipeline = make_pipeline(mne.decoding.Scaler(epochs.info),
@@ -90,7 +91,7 @@ rfe = RFE(clf, step=1)
 # Function: Repeat training and testing.
 # Output:
 '''
-num_rep = 2
+num_rep = 13
 pca_score_acc = np.zeros([num_rep, cv.n_splits])
 pca_score_rec = np.zeros([num_rep, cv.n_splits, 2])
 xdawn_score_acc = np.zeros([num_rep, cv.n_splits])
@@ -151,3 +152,4 @@ np.save('pca_score_acc.npy', pca_score_acc)
 np.save('pca_score_rec.npy', pca_score_rec)
 np.save('xdawn_score_acc.npy', xdawn_score_acc)
 np.save('xdawn_score_rec.npy', xdawn_score_rec)
+
