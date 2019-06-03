@@ -17,6 +17,11 @@ root_dir = os.path.join('D:\\', 'RSVP_MEG_experiment')
 contain_dir = os.path.join(
     root_dir, 'scripts', 'RSVP_MVPA', 'acc_rec_allepochs_runbyserver')
 
+'''
+# Function: Read data from acc and rec file.
+# Format: Acc and rec file restore accuracy and recall rate of odd stimuli.
+# Format: Repeat time is 13, 10-folder MVPA.
+'''
 data = {}
 print('-'*80)
 for mode_ in ['eeg', 'meg']:
@@ -29,6 +34,9 @@ for mode_ in ['eeg', 'meg']:
                 '%s_score_%s.npy' % (fe_, score_)))
             print('%s: %f' % (idstr, np.mean(data[idstr])))
 
+'''
+# Function: calculate mean value of accuracy and recall rate.
+'''
 print('-'*80)
 for mode_ in ['eeg', 'meg']:
     for fe_ in ['pca', 'xdawn']:
