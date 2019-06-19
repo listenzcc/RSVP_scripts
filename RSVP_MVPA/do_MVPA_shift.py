@@ -38,7 +38,7 @@ for i in range(4, 12):  # range(1, 11):  # [5, 7, 9]:
     # Function: Reading epochs from -epo.fif.
     # Output: epochs, resampled epochs.
     '''
-    epo_path = os.path.join(epochs_dir, 'meg_mxl_epochs_%d-epo.fif' % i)
+    epo_path = os.path.join(epochs_dir, 'meg_mxl_epochs_%d-eposhift.fif' % i)
 
     epochs = mne.read_epochs(epo_path, verbose=True)
     epochs.crop(tmin=0.2, tmax=0.5)
@@ -69,7 +69,7 @@ epochs = mne.epochs.concatenate_epochs(epochs_list)
 # Function: Setting MVPA stuff.
 # Output: cv, cross-validation maker.
 # Output: pca_pipeline, pipeline of pca decomposition.
-# Output: xdawn_pipeline, pipeline of xdawn filter.
+# Output: csp_pipeline, pipeline of csp filter.
 # Output: svc, SVM classifier.
 '''
 pca = PCA(n_components=8)
@@ -133,6 +133,6 @@ for train, test in cv.split(epochs_data, labels):
 
 
 
-report_results(labels, preds_pca, title='accs_pca')
+report_results(labels, preds_pca, title='accs_shift_pca')
 # report_results(labels, preds_csp, title='accs_csp')
-report_results(labels, preds_xdawn, title='accs_xdawn')
+report_results(labels, preds_xdawn, title='accs_shift_xdawn')
