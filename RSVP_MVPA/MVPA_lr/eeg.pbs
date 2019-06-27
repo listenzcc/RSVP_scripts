@@ -1,0 +1,9 @@
+#!/bin/sh
+#PBS -N eeg
+#PBS -o /nfs/cell_a/userhome/zcc/documents/RSVP_experiment/RSVP_MVPA/MVPA_lr
+#PBS -e /nfs/cell_a/userhome/zcc/documents/RSVP_experiment/RSVP_MVPA/MVPA_lr
+export PATH=~/bin:~/Python3.6.8/bin:~/Vim81/bin:/bin:/usr/lib/lapack:$PATH
+export LD_LIBRARY_PATH=/nfs/cell_a/userhome/zcc/Python3.6.8/lib
+date
+python3 /nfs/cell_a/userhome/zcc/documents/RSVP_experiment/RSVP_MVPA/MVPA_lr/do_MVPA_alltime_eeg.py
+date
