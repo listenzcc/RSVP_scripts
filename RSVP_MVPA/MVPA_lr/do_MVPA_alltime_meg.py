@@ -151,11 +151,11 @@ for stuff in read_save_stuff.values():
 
             # SVM rbf
             clf_svm_rbf.fit(normalize_pipeline.fit_transform(data_train_), labels[train])
-            preds_xdawn_svm_rbf[test, len(w_start)] = clf_svm_rbf.predict(normalize_pipeline.transform(data_test_))
+            preds_xdawn_svm_rbf[test, j] = clf_svm_rbf.predict(normalize_pipeline.transform(data_test_))
 
             # SVM linear
             clf_svm_linear.fit(normalize_pipeline.fit_transform(data_train_), labels[train])
-            preds_xdawn_svm_linear[test, len(w_start)] = clf_svm_linear.predict(normalize_pipeline.transform(data_test_))
+            preds_xdawn_svm_linear[test, j] = clf_svm_linear.predict(normalize_pipeline.transform(data_test_))
 
             # LR
             clf_lr.fit(normalize_pipeline.fit_transform(data_train_), labels[train])
